@@ -1,33 +1,60 @@
-use anyhow::anyhow;
 use serde_json::{Map, Value};
 
 /// Implements  IETF-RFC7396
-pub fn merge_json(target: &mut Value, patch: &Value) -> Result<(), Box<dyn std::error::Error>> {
+/// Modifies target in-place
+/// The used unwraps are safe and can't panics due to the checks before them
+pub fn merge_json(target: &mut Value, patch: &Value) {
     if patch.is_object() {
         if !target.is_object() {
             *target = Value::Object(Map::new());
         }
 
-        let target_map = target
-            .as_object_mut()
-            .ok_or(anyhow!("Could not parse target as object"))?;
-        let patch_map = patch
-            .as_object()
-            .ok_or(anyhow!("Could not parse patch as object"))?;
+        let target_map = target.as_object_mut().unwrap();
+        let patch_map = patch.as_object().unwrap();
 
         for (key, value) in patch_map {
             if value.is_null() {
                 target_map.remove(key);
             } else {
-                merge_json(target_map.entry(key).or_insert(Value::Null), value)?;
+                merge_json(target_map.entry(key).or_insert(Value::Null), value);
             }
         }
     } else {
         // Only the last leaf node is cloned. Still a copy though.
         *target = patch.clone();
     }
+}
 
-    Ok(())
+/// Not specified in the RFC, but a best effort attempt that would satisfy the property:
+/// merge_json(source, create_patch(source, target)) == target
+/// (merge_json is the left-inverse of create patch)
+pub fn create_patch(source: Value, target: Value) -> Option<Value> {
+    if !target.is_object() || !source.is_object() {
+        return Some(target);
+    }
+
+    let mut result = Value::Object(Map::new());
+    let unique_keys = source
+        .as_object()?
+        .keys()
+        // This unwrap is safe, as whether target is a valid object is checked above
+        .filter(|k| !target.as_object().unwrap().contains_key(*k));
+
+    for key in unique_keys {
+        result[key] = Value::Null;
+    }
+
+    for (key, value) in target.as_object()?.iter() {
+        if !source.as_object().unwrap().contains_key(key) {
+            result[key] = value.clone();
+            continue;
+        }
+        if *value == source[key] {
+            continue;
+        }
+        result[key] = create_patch(source[key].clone(), value.clone())?;
+    }
+    return Some(result);
 }
 
 #[cfg(test)]
@@ -53,12 +80,29 @@ mod tests {
         let expected = std::fs::read_to_string(expected_path).unwrap();
         let expected: Value = serde_json::from_str(&expected).unwrap();
 
-        merge_json(&mut template, &patch).unwrap();
+        merge_json(&mut template, &patch);
         println!("{}", serde_json::to_string_pretty(&template).unwrap());
 
         assert_eq!(template, expected);
     }
 
+    #[test]
+    fn create_patch_rfc_example() {
+        let target = &(EXPECTED_DIR.clone() + "rfc_expected.json");
+        let target = std::fs::read_to_string(target).unwrap();
+        let target: Value = serde_json::from_str(&target).unwrap();
+
+        let source = &(TEMPLATES_DIR.clone() + "rfc_template.json");
+        let source = std::fs::read_to_string(source).unwrap();
+        let source: Value = serde_json::from_str(&source).unwrap();
+
+        let patch = &(PATCHES_DIR.clone() + "rfc_patch.json");
+        let patch = std::fs::read_to_string(patch).unwrap();
+        let patch: Value = serde_json::from_str(&patch).unwrap();
+
+        assert_eq!(create_patch(source, target).unwrap(), patch)
+
+    }
     #[test]
     fn rfc_example_test() {
         test_from_path(
