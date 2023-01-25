@@ -11,11 +11,11 @@ pub fn merge_json(target: &mut Value, patch: &Value) -> Result<(), Box<dyn std::
         let target_map = target
             .as_object_mut()
             .ok_or(anyhow!("Could not parse target as object"))?;
-        let patch_obj = patch
+        let patch_map = patch
             .as_object()
             .ok_or(anyhow!("Could not parse patch as object"))?;
 
-        for (key, value) in patch_obj {
+        for (key, value) in patch_map {
             if value.is_null() {
                 target_map.remove(key);
             } else {
