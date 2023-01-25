@@ -1,0 +1,22 @@
+{
+    "name": "feedercan",
+    "image": {
+        "name": "ghcr.io/eclipse/kuksa.val.feeders/dbc2val:v0.1.1"
+    },
+    "host_config": {
+        "extra_hosts": [
+            "databroker-host:host_ip"
+        ]
+    },
+    "config": {
+        "env": [
+            "VEHICLEDATABROKER_DAPR_APP_ID=databroker",
+            "VDB_ADDRESS=databroker-host:30555",
+            "USECASE=databroker",
+            "LOG_LEVEL=info",
+            "databroker=info",
+            "broker_client=info",
+            "dbcfeeder=info"
+        ]
+    }
+}

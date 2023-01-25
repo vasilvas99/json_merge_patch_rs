@@ -1,0 +1,107 @@
+{
+    "id": "",
+    "name": "otelcol-sdv-agent",
+    "image": {
+        "name": "ghcr.io/softwaredefinedvehicle/sdv-edge-otel/otelcol-sdv-ext:v0.0.1",
+        "decrypt_config": null
+    },
+    "host_name": "",
+    "domain_name": "",
+    "resolv_conf_path": "",
+    "hosts_path": "",
+    "hostname_path": "",
+    "mounts": [
+        {
+            "source": "/",
+            "destination": "/hostfs",
+            "propagation_mode": "rprivate"
+        },
+        {
+            "source": "/var/lib/container-management/containers",
+            "destination": "/var/lib/docker/containers",
+            "propagation_mode": "rprivate"
+        },
+        {
+            "source": "/run/log/journal",
+            "destination": "/run/log/journal",
+            "propagation_mode": "rprivate"
+        }
+    ],
+    "hooks": [],
+    "host_config": {
+        "devices": [],
+        "network_mode": "bridge",
+        "privileged": false,
+        "restart_policy": {
+            "maximum_retry_count": 0,
+            "retry_timeout": 0,
+            "type": "unless-stopped"
+        },
+        "runtime": "io.containerd.runc.v2",
+        "extra_hosts": [
+            "mosquitto:host_ip"
+        ],
+        "port_mappings": [
+            {
+              "protocol": "tcp",
+              "container_port": 9411,
+              "host_ip": "localhost",
+              "host_port": 4317,
+              "host_port_end": 4317
+            }
+        ],
+        "log_config": {
+            "driver_config": {
+                "type": "json-file",
+                "max_files": 2,
+                "max_size": "1M",
+                "root_dir": ""
+            },
+            "mode_config": {
+                "mode": "blocking",
+                "max_buffer_size": ""
+            }
+        },
+        "resources": null
+    },
+    "io_config": {
+        "attach_stderr": false,
+        "attach_stdin": false,
+        "attach_stdout": false,
+        "open_stdin": false,
+        "stdin_once": false,
+        "tty": false
+    },
+    "config": {
+        "env": [
+           "OTELCOL_NAME=otelcol-sdv",
+           "HOST_PROC=/hostfs/proc",
+           "HOST_SYS=/hostfs/sys",
+           "HOST_ETC=/hostfs/etc",
+           "HOST_VAR=/hostfs/var",
+           "HOST_RUN=/hostfs/run",
+           "HOST_DEV=/hostfs/dev"
+        ],
+        "cmd": [
+            "/otelcol-sdv --config=/conf/relay.yaml"
+        ]
+    },
+    "network_settings": null,
+    "state": {
+        "pid": -1,
+        "started_at": "",
+        "error": "",
+        "exit_code": 0,
+        "finished_at": "",
+        "exited": false,
+        "dead": false,
+        "restarting": false,
+        "paused": false,
+        "running": false,
+        "status": "",
+        "oom_killed": false
+    },
+    "created": "",
+    "manually_stopped": false,
+    "restart_count": 0
+}

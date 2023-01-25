@@ -1,0 +1,11 @@
+{
+    "name": "otelcol-sdv-exporter",
+    "image": {
+        "name": "ghcr.io/softwaredefinedvehicle/sdv-edge-otel/otelcol-sdv-exporter:v0.0.1"
+    },
+    "host_config": {
+        "extra_hosts": [
+            "mosquitto:host_ip"
+        ]
+    }
+}
